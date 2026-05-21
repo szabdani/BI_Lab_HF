@@ -16,8 +16,7 @@ class DimCircuit(Base):
     circuit_id = Column(Integer, primary_key=True, autoincrement=True)
     circuit_ref = Column(String, unique=True)
 
-    WC_name = Column(String, nullable=True)
-    Weather_name = Column(String, nullable=True)
+    name = Column(String, nullable=False)
     location = Column(String, nullable=True)
     country = Column(String, nullable=True)
 
@@ -36,14 +35,10 @@ class DimDriver(Base):
 
     number = Column(Integer, nullable=True)
     code = Column(String(3), nullable=True)
-    position_name = Column(String)
     forename = Column(String, nullable=False)
     surname = Column(String, nullable=False)
     nationality = Column(String)
     date_of_birth = Column(Date, nullable=True)
-
-    current_constructor_id = Column(Integer, ForeignKey('dim_constructors.constructor_id'), nullable=True)
-    current_constructor = relationship("DimConstructor", backref="current_drivers")
 
 class DimRace(Base):
     __tablename__ ='dim_races'
@@ -97,8 +92,8 @@ class FactRaceResult(Base):
     fastest_lap_rank = Column(Integer)
     fastest_lap_time = Column(String)
 
-    status_id = Column(Integer) # status.csv tartalmazza a státusz kódokat és jelentésüket, pl. "Finished", "DSQ"
-
+    status = Column(String)
+    
 class FactWeather(Base):
     """
     Egy versenynek az időjárási adatai.
@@ -110,8 +105,8 @@ class FactWeather(Base):
     race_id = Column(Integer, ForeignKey('dim_races.race_id'))
     
     temperature = Column(Float)
-    percipitation = Column(Float)
-    wind_speed = Column(Float)
+    precipitation = Column(Float)
+    windspeed = Column(Float)
 
 class FactDriverSeasonStat(Base):
     """
