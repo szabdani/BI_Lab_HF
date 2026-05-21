@@ -146,4 +146,18 @@ class FactConstructorSeasonStat(Base):
     podiums = Column(Integer)
     points = Column(Integer)
 
-
+class FactAggregatedLapTime(Base):
+    """
+    Egy versenyen egy versenyző átlagos körideje, legjobb körideje és teljesített körök száma.
+    Ezt a táblát a FactLapTime-ból számoljuk ki, és vele gyorsabb a KPI számítás.
+    """
+    __tablename__ = 'fact_aggregated_lap_times'
+    agg_lap_id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    race_id = Column(Integer, ForeignKey('dim_races.race_id'))
+    driver_id = Column(Integer, ForeignKey('dim_drivers.driver_id'))
+    constructor_id = Column(Integer, ForeignKey('dim_constructors.constructor_id'))
+    
+    avg_lap_milliseconds = Column(Float)
+    fastest_lap_milliseconds = Column(Integer)
+    total_laps_completed = Column(Integer)

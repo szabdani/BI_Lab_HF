@@ -176,9 +176,18 @@ def run_historical_load():
         # 7. Köridők (FactLapTime)
         print(f"Köridők feldolgozása... (Szűrt futamok száma: {len(new_race_ids)})")
         df_lap_times_filtered = df_lap_times[df_lap_times['raceId'].isin(new_race_ids)].copy()
-        lap_mappings = df_lap_times_filtered.rename(columns={
-            "raceId": "race_id", "driverId": "driver_id"
-        })[["race_id", "driver_id", "lap", "position", "time", "milliseconds"]].to_dict('records')
+
+        df_driver_constructors = df_results_filtered[['raceId', 'driverId', 'constructorId']].drop_duplicates()
+        df_lap_times_merged = pd.merge(
+            df_lap_times_filtered, 
+            df_driver_constructors, 
+            on=['raceId', 'driverId'], 
+            how='left'
+        )
+
+        lap_mappings = df_lap_times_merged.rename(columns={
+            "raceId": "race_id", "driverId": "driver_id", "constructorId": "constructor_id"
+        })[["race_id", "driver_id", "constructor_id", "lap", "position", "time", "milliseconds"]].to_dict('records')
         session.bulk_insert_mappings(FactLapTime, lap_mappings)
         session.commit()
         
