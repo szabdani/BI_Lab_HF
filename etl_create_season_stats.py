@@ -13,7 +13,7 @@ def calculate_season_standings(session, engine):
     print("Tényadatok lekérése az adatbázisból...")
     query_results = """
         SELECT r.season_id, res.race_id, res.driver_id, res.constructor_id, 
-               res.finishing_position, res.points, res.status
+               res.finishing_position, res.points, res.status, res.fastest_lap_rank
         FROM fact_race_results res
         JOIN dim_races r ON res.race_id = r.race_id
     """
@@ -29,13 +29,15 @@ def calculate_season_standings(session, engine):
     df_results['is_podium'] = ((df_results['finishing_position'] >= 1) & (df_results['finishing_position'] <= 3)).astype(int)
     df_results['races_entered'] = 1
     df_results['races_finished'] = (~df_results['is_dnf']).astype(int)
+    df_results['is_fastest_lap'] = df_results['fastest_lap_rank'] == 1
 
     driver_stats = df_results.groupby(['season_id', 'driver_id', 'constructor_id']).agg(
         points=('points', 'sum'),
         wins=('is_win', 'sum'),
         podiums=('is_podium', 'sum'),
         races_entered=('races_entered', 'sum'),
-        races_finished=('races_finished', 'sum')
+        races_finished=('races_finished', 'sum'),
+        fastest_laps=('is_fastest_lap', 'sum')
     ).reset_index()
 
     # Bajnoki helyezés számítása (szezononként, pontok alapján csökkenő sorrendben)
@@ -63,7 +65,6 @@ def calculate_season_standings(session, engine):
     print("Új aggregációk beszúrása az adatbázisba...")
     session.bulk_insert_mappings(FactDriverSeasonStat, driver_stats.to_dict('records'))
     session.bulk_insert_mappings(FactConstructorSeasonStat, constructor_stats.to_dict('records'))
-    session.bulk_insert_mappings(FactAggregatedLapTime, lap_stats.to_dict('records'))
     session.commit()
 
     print("--- Aggregációk betöltése SIKERESEN BEFEJEZŐDÖTT! ---")
