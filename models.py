@@ -145,3 +145,16 @@ class FactConstructorSeasonStat(Base):
     wins = Column(Integer)
     podiums = Column(Integer)
     points = Column(Integer)
+    
+class FactPredictedLapTime(Base):
+    """
+    A predikciós modell által előre jelzett köridő egy adott pályára és dátumra.
+    """
+    __tablename__ = 'fact_predicted_lap_times'
+    prediction_id = Column(Integer, primary_key=True, autoincrement=True)
+
+    circuit_id = Column(Integer, ForeignKey('dim_circuits.circuit_id'))
+    
+    ds = Column(DateTime)
+    predicted_lap_ms = Column(Float)
+    predicted_lap_formatted = Column(String)
