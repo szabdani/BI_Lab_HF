@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 from config import get_db_engine
 from models import (
     DimSeason, DimRace, FactRaceResult, FactLapTime, 
-    FactDriverSeasonStat, FactConstructorSeasonStat, FactAggregatedLapTime
+    FactDriverSeasonStat, FactConstructorSeasonStat
 )
 
 def calculate_season_standings(session, engine):
-    print("\n--- Bajnoki statisztikák és aggregációk számítása ---")
+    print("\n--- Bajnoki statisztikák számítása ---")
     
     # 1. Adatok lekérése a DWH-ból
     print("Tényadatok lekérése az adatbázisból...")
@@ -54,25 +54,10 @@ def calculate_season_standings(session, engine):
     # Bajnoki helyezés számítása (szezononként, pontok alapján csökkenő sorrendben)
     constructor_stats['constructor_position'] = constructor_stats.groupby('season_id')['points'].rank(ascending=False, method='min').astype(int)
 
-    # 4. Köridejű aggregációk (FactAggregatedLapTime)
-    print("Köridők elő-aggregálása (Átlag és Leggyorsabb kör futamonként)...")
-    query_laps = "SELECT race_id, driver_id, constructor_id, milliseconds FROM fact_lap_times"
-    df_laps = pd.read_sql(query_laps, engine)
-
-    lap_stats = df_laps.groupby(['race_id', 'driver_id', 'constructor_id']).agg(
-        avg_lap_milliseconds=('milliseconds', 'mean'),
-        fastest_lap_milliseconds=('milliseconds', 'min'),
-        total_laps_completed=('milliseconds', 'count')
-    ).reset_index()
-
-    # Null értékek kezelése az átlagoknál
-    lap_stats['avg_lap_milliseconds'] = lap_stats['avg_lap_milliseconds'].fillna(0).astype(float)
-
-    # 5. Adatok betöltése az adatbázisba
+    # 4. Adatok betöltése az adatbázisba
     print("Régi aggregációk törlése...")
     session.query(FactDriverSeasonStat).delete()
     session.query(FactConstructorSeasonStat).delete()
-    session.query(FactAggregatedLapTime).delete()
     session.commit()
 
     print("Új aggregációk beszúrása az adatbázisba...")
